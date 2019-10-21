@@ -1,0 +1,6 @@
+{
+    "terminal.integrated.env.linux": {
+        "PATH": "/home/inesmaciel/.platformio/penv/bin:/home/inesmaciel/.platformio/penv:/home/inesmaciel/bin:/home/inesmaciel/.local/bin:/home/inesmaciel/bin:/home/inesmaciel/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games",
+        "PLATFORMIO_CALLER": "vscode"
+    }
+}
