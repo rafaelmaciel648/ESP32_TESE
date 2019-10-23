@@ -1,140 +1,90 @@
-// #include <Arduino.h>
-// #include <time.h>
+#include <Arduino.h>
+#include <time.h>
+#include <sys/time.h>
+#include <esp_bt.h>
+#include <esp_bt_main.h>
+#include <esp_wifi.h>
 
-// #include "scheduler.h"
-// #include "sensors.h"
+#include "scheduler.h"
+//#include "sensors.h"
 
-// // void readSensors(void* p){
-// // }
+RTC_DATA_ATTR int boot_count = 0;
+RTC_DATA_ATTR Sched_Task_t Tasks_struct_RTC[10];
 
-// // void saveData(void* p){
-// // }
+#define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
+#define TIME_TO_SLEEP  10        /* Time ESP32 will go to sleep (in seconds) */
 
-// void setup(){
-//   // Sched_Init();           // periodic task
+struct tm date;
 
-//   // CONFIG init, sensors
-
-//   // Calculate LCM (least comun multiplier) to configure periodical interrupt
-// }
-
-// void loop(){
-
-//   // 1- SET NEXT SENSOR INTERRUP
-
-//   // 2- RUN THIS READ TASK CYCLE
-
-//   // 3- PROCESS THIS DATA CYCLE
-
-//   // 4- SAVE THIS DATA CYCLE
-
-//   // 5- CHECK ALARMS
-
-//   // 6- SIGFOX COMMUNICATION
-
-//   // 7- DEEPSLEEP
-
-//   // 8- WAIT NEXT INTERRUPT
-
-//   // Sched_Dispatch();
-// }
-
-#include <SPI.h> //INCLUSÃO DE BIBLIOTECA
-#include <SD.h> //INCLUSÃO DE BIBLIOTECA
- 
-const int chipSelect = 5; //PINO DIGITAL UTILIZADO PELO TERMINAL CS DO MÓDULO
- 
-// void setup(){
-//     Serial.begin(115200); //INICIALIZA A SERIAL
-//     while(!Serial){ //ESPERA PELA CONEXÃO DA PORTA SERIAL (APENAS PARA O ARDUINO LEONARDO) 
-//     };
-
-//     Serial.println("Inicializando o cartão de memória..."); //IMPRIME O TEXTO NO MONITOR SERIAL
-//     Serial.println("********************************************"); //IMPRIME NO MONITOR SERIAL
-//     pinMode(SS, OUTPUT); //DEFINE O PINO COMO SAÍDA
-    
-//     if(!SD.begin(chipSelect)){ //SE O CARTÃO DE MEMÓRIA NÃO ESTIVER PRESENTE OU FALHAR, FAZ
-//         Serial.println("Cartão de memória falhou ou não está presente!"); //IMPRIME O TEXTO NO MONITOR SERIAL
-//         return; //NÃO FAZ MAIS NADA
-//     }
-
-//     Serial.println("Cartão de memória inicializado com sucesso!"); //IMPRIME O TEXTO NO MONITOR SERIAL
-//     Serial.println("********************************************"); //IMPRIME NO MONITOR SERIAL
-//     Serial.println("Mensagem do arquivo de texto que está no cartão de memória:"); //IMPRIME O TEXTO NO MONITOR SERIAL
-//     Serial.println(); //QUEBRA DE LINHA NO MONITOR SERIAL
-    
-//     SDFile dataFile = SD.open("arquivo.txt"); //dataFile RECEBE O CONTEÚDO DO ARQUIVO DE TEXTO (ABRIR UM ARQUIVO POR VEZ)
-  
-//     Serial.println("OI");
-
-//     if(dataFile){ //SE EXISTIREM DADOS A SEREM LIDOS, FAZ
-//         while(dataFile.available()){ //ENQUANTO HOUVER CONTEÚDO A SER LIDO, FAZ
-//             Serial.write(dataFile.read()); //ESCREVE NA SERIAL AS INFORMAÇÕES DO ARQUIVO DE TEXTO
-//         }
-//         dataFile.close(); //ENCERRA A LEITURA (SEMPRE FECHAR O ARQUIVO ATUAL PARA ABRIR UM OUTRO ARQUIVO)
-//     }
-//     else{ //SENÃO, FAZ
-//       Serial.println("Erro ao abrir o arquivo!"); //IMPRIME O TEXTO NO MONITOR SERIAL
-//     } 
-// }
-
-// void loop(){
-// }
-
-#include <SPI.h>
-#include <SD.h>
-
-File myFile;
-
-void setup() {
-  // Open serial communications and wait for port to open:
-  Serial.begin(115200);
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for native USB port only
-  }
-
-
-  Serial.print("Initializing SD card...");
-
-  if (!SD.begin(5)) {
-    Serial.println("initialization failed!");
-    while (1);
-  }
-  Serial.println("initialization done.");
-
-//   // open the file. note that only one file can be open at a time,
-//   // so you have to close this one before opening another.
-//   myFile = SD.open("/arquivo.txt", FILE_WRITE);
-
-//   // if the file opened okay, write to it:
-//   if (myFile) {
-//     Serial.print("Writing to test.txt...");
-//     myFile.println("testing 1, 2, 3.");
-//     // close the file:
-//     myFile.close();
-//     Serial.println("done.");
-//   } else {
-//     // if the file didn't open, print an error:
-//     Serial.println("error opening test.txt");
-//   }
-
-  // re-open the file for reading:
-  myFile = SD.open("/arquivo.txt");
-  if (myFile) {
-    Serial.println("test.txt:");
-
-    // read from the file until there's nothing else in it:
-    while (myFile.available()) {
-      Serial.write(myFile.read());
-    }
-    // close the file:
-    myFile.close();
-  } else {
-    // if the file didn't open, print an error:
-    Serial.println("error opening test.txt");
-  }
+void func1(){
+    Serial.println("print FUNC_1");
 }
 
-void loop() {
-  // nothing happens after setup
+void func2(){
+    Serial.println("print FUNC_2");
+}
+
+void func3(){
+    Serial.println("print FUNC_3");
+}
+
+void func4(){
+    Serial.println("print FUNC_4");
+}
+
+void setup(){
+    // delay(5000);
+    // esp_bluedroid_disable();
+    // esp_bluedroid_deinit();
+    // esp_bt_controller_disable();
+    // esp_bt_controller_deinit();
+    // esp_bt_mem_release(ESP_BT_MODE_BTDM);
+    // esp_wifi_stop();
+    // esp_wifi_deinit();
+
+    copy_struct_to(Tasks_struct_RTC, Tasks);
+
+    // 1. CONFIG init, sensors...
+    // 2. Calculate LCM (least comun multiplier) to configure periodical interrupt
+
+    Serial.begin(115200);
+
+    // timeval tv;                         // Cria a estrutura temporaria para funcao abaixo.
+	// tv.tv_sec = 697593600;              // Set actual date in UNIX 
+	// settimeofday(&tv, NULL);            // Configura o RTC para manter a data atribuida atualizada.
+
+    if(!boot_count){
+        Sched_Init();           // periodic task
+        Sched_AddT(func1, 10);
+        Sched_AddT(func2, 20);
+        Sched_AddT(func3, 30);
+        Sched_AddT(func4, 40);
+        boot_count = 1;
+    }
+	
+}
+
+void loop(){
+
+    // 1- SET NEXT SENSOR INTERRUP
+    // 2- RUN THIS READ TASK CYCLE
+    // 3- PROCESS THIS DATA CYCLE
+    // 4- SAVE THIS DATA CYCLE
+    // 5- CHECK ALARMS
+    // 6- SIGFOX COMMUNICATION
+    // 7- DEEPSLEEP
+    // 8- WAIT NEXT INTERRUPT
+
+    // time_t tt = time(NULL);
+    // date = *gmtime(&tt);//Converte o tempo atual e atribui na estrutura
+    // char date_format[64];
+	// strftime(date_format, 64, "%d/%m/%Y %H:%M:%S", &date);//Cria uma String formatada da estrutura "data"
+ 
+
+    Sched_Schedule();
+    Sched_Dispatch();
+
+    copy_struct_to(Tasks, Tasks_struct_RTC);
+    esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
+    esp_deep_sleep_start();
 }

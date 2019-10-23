@@ -1,3 +1,14 @@
+/* SCHEDULER_H */
+
+#ifndef SHEDULER_H
+#define SHEDULER_H
+
+#include <esp_attr.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
 * Struct with all read tasks
 */
@@ -5,15 +16,15 @@
 typedef struct {
     int period;                     // period in seconds
     int delay;                      // seconds until next activation
+    unsigned long nextExec;         // UNIX time of next activation
     void (*func)(void);             // function pointer
-//    int exec;                       // activation counter
 } Sched_Task_t;
 
-Sched_Task_t Tasks[20];
+Sched_Task_t Tasks[10];             // consider maximum 10 read tasks
 
 
-/* - Initialise data structures.
-* - Configure interrupt that periodically calls Sched_Schedule().
+/* 
+* - Initialise data structures.
 */
 int Sched_Init(void);
 
@@ -29,4 +40,12 @@ void Sched_Schedule(void);
 */
 void Sched_Dispatch(void);
 
-int Sched_AddT(void (*f)(void), int d, int p);
+int Sched_AddT(void (*f)(void), int p);
+
+void copy_struct_to(Sched_Task_t *from_struct, Sched_Task_t *to_struct);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
