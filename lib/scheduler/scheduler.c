@@ -2,15 +2,17 @@
 
 #include <time.h>
 
+extern SchedTask tasks[10];
+
 /*
 * Initialise empty data structures.
 */
 int Sched_Init(void){
-    for(int x=0; x<10; x++){
-        Tasks[x].func = 0;
-        Tasks[x].delay = 0;
-        Tasks[x].period = 0;
-        Tasks[x].nextExec = 0;
+    for(int i=0; i<10; i++){
+        tasks[i].func = 0;
+        tasks[i].delay = 0;
+        tasks[i].period = 0;
+        tasks[i].nextExec = 0;
     }
     return 1;
 };
@@ -20,13 +22,13 @@ int Sched_Init(void){
 * Routine to schedule all the tasks for next cycle.
 */
 void Sched_Schedule(void){
-    for(int x=0; x<10; x++){
-        if( Tasks[x].func ){
-            if(!Tasks[x].nextExec){                                 // if first schedule
-                Tasks[x].nextExec = time(NULL) + Tasks[x].period;   // set time of next execution
+    for(int i=0; i<10; i++){
+        if( tasks[i].func ){
+            if(!tasks[i].nextExec){                                 // if first schedule
+                tasks[i].nextExec = time(NULL) + tasks[i].period;   // set time of next execution
             }
-            else if(Tasks[x].nextExec){                             // if not first shedule
-                Tasks[x].delay = Tasks[x].nextExec - time(NULL);    // update delay time
+            else if(tasks[i].nextExec){                             // if not first shedule
+                tasks[i].delay = tasks[i].nextExec - time(NULL);    // update delay time
             }
         }
     }
@@ -37,11 +39,11 @@ void Sched_Schedule(void){
 * Verifies the tasks to run this cycle. 
 */
 void Sched_Dispatch(void){
-    for(int x=0; x<10; x++){
-        if( Tasks[x].func && ( Tasks[x].delay <= 0) ){              // time to execute
-            Tasks[x].delay = Tasks[x].period;
-            Tasks[x].nextExec = time(NULL) + Tasks[x].period;
-            Tasks[x].func();
+    for(int i=0; i<10; i++){
+        if( tasks[i].func && ( tasks[i].delay <= 0) ){              // time to execute
+            tasks[i].delay = tasks[i].period;
+            tasks[i].nextExec = time(NULL) + tasks[i].period;
+            tasks[i].func();
         }
     }
 };
@@ -52,21 +54,12 @@ void Sched_Dispatch(void){
 * - int p - period in seconds;
 */
 int Sched_AddT(void (*f)(void), int p){
-    for(int x=0; x<10; x++){
-        if(!Tasks[x].func){
-            Tasks[x].period = p;
-            Tasks[x].func = f;
-            return x;
+    for(int i=0; i<10; i++){
+        if(!tasks[i].func){
+            tasks[i].period = p;
+            tasks[i].func = f;
+            return i;
         }
     }
     return -1;
 };
-
-/*
-* Function to clone Sched_Task_t struct. To save/read to/from de RTC memory before/after Depp Sleep.
-*/
-void copy_struct_to(Sched_Task_t *from_struct, Sched_Task_t *to_struct){
-    for(int x=0; x<10; x++){
-        to_struct[x] = from_struct[x];
-    }
-}
