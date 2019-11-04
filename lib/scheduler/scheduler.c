@@ -53,7 +53,7 @@ void Sched_Dispatch(void){
 * - void (*f)(void) - Read function;
 * - int p - period in seconds;
 */
-int Sched_AddT(void (*f)(void), int p){
+int Sched_AddT(void (*f)(void), double p){
     for(int i=0; i<10; i++){
         if(!tasks[i].func){
             tasks[i].period = p;

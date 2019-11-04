@@ -14,11 +14,23 @@ enum sensorType{digital, analog};
 enum parameter{temperature, ph, dissolvedOxygen, conductivity};
 
 class Sensor{
-    public:
+    protected:
         String id;                          // Sensor string ID
         sensorType type;                    // Sensor type (digital/analog)
-        int readPeriod;                     // Read period in seconds
+        double readPeriod;                // Read period in seconds
 		parameter param;                    // Parameter (temperature, ph, dissolvedOxygen, conductivity)
+        uint8_t state;                      // State of sensor (state=0 if disconnected; state!=0 if connected)
+
+    public:
+
+        String get_id();
+        sensorType get_type();
+        double get_period();
+        parameter get_param();
+        uint8_t get_state();
+
+        virtual void readSensor() = 0;
+        virtual void printInfo() = 0;
 };
 
 class TempSensor: public Sensor{
@@ -27,28 +39,52 @@ class TempSensor: public Sensor{
         int8_t max_temp;                    // Maximum temperature reading
         uint16_t beta;                      // Beta value (25/85) in Kelvin
         uint16_t noLoadResistor;            // No load resistence at 25 celsius
-        TempSensor(String s, sensorType type, int period, int8_t min, int8_t max, uint16_t beta, uint16_t noLoadResistor);
-        double readTemperature();
+        TempSensor();
+        TempSensor(String id, String type, double period, int8_t min, int8_t max, uint16_t beta, uint16_t noLoadResistor);
+        
+        void readSensor();
+        void printInfo();
+
+        /**** Getters ****/
+        sensorType get_type();
+        String get_id();
+        double get_period();
+        parameter get_param();
+        uint8_t get_state();
 };
 
 class PhSensor: public Sensor{
 	public:
 		double slope;                       // Slope of the rect in Volts (typical 59.16mV at 25C)
-		double isopotencial;                // Error at isopotencial 0 PH in Volts
+        double isopotencial;                // voltage at 0 PH
+		double iso_error;                   // Error at isopotencial 0 PH in Volts
 		double impedance;                   // Output impedance at MOhms
-        PhSensor(String s, sensorType type, int period, double slope, double isopotencial, double impedance);
-        double readPh();
+        PhSensor();
+        PhSensor(String id, String type, double period, double slope, double isopotencial, double iso_error, double impedance);
+        
+        
+        void readSensor();
+        void printInfo();
+
+        /**** Getters ****/
+        String get_id();
+        sensorType get_type();
+        double get_period();
+        parameter get_param();
+        uint8_t get_state();
 };
 
-class DissolvedOxygenSensor: public Sensor{
-	public:
-		double a;
-};
+// class DissolvedOxygenSensor: public Sensor{
+// 	public:
+// 		double a;
+//         DissolvedOxygenSensor();
+// };
 
-class ConductivitySensor: public Sensor{
-	public:
-		double a;
-};
+// class ConductivitySensor: public Sensor{
+// 	public:
+// 		double a;
+//         ConductivitySensor();
+// };
 
 
 

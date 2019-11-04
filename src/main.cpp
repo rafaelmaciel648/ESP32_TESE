@@ -12,14 +12,16 @@
 #include "sensors.h"
 #include "filemanager.h"
 
+#define MAX_SENSORS 5
+
 RTC_DATA_ATTR int boot_count = 0;
 RTC_DATA_ATTR SchedTask tasks[10];
 RTC_DATA_ATTR Device module;
+// RTC_DATA_ATTR Sensor* connectedSensors[MAX_SENSORS];
 
 #define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
 #define TIME_TO_SLEEP  10        /* Time ESP32 will go to sleep (in seconds) */
 
-File myFile;
 
 void setup(){
     //***** TURN OFF WIFI/BLUETOOTH **********//
@@ -36,31 +38,34 @@ void setup(){
     // 2. Calculate LCM (least comun multiplier) to configure periodical interrupt
 
     Serial.begin(115200);
-    while(!SD.begin(SS));
-    myFile = SD.open("/config.xml");
-    if(myFile){
-        while(myFile.available()){
-            Serial.print(myFile.read());
-            Serial.print("\n");
-        }
-    }
+
+    double a;
+
 
     // ************************ROUTINE TO RUN ONLY ON SYSTEM BOOT *************************
     if(!boot_count){
+
         module.setConfiguration();
+        module.setSensors();
         Serial.print("ID: ");
         Serial.println(module.get_id());
-        Serial.print("location: ");
+        Serial.print("Location: ");
         Serial.println(module.get_location());
+        Serial.print("Number of Sensors: ");
+        Serial.println(module.get_nSensors());
+        Serial.println("Sensors 1: ");
+        module.connectedSensors[0]->printInfo();
+        Serial.println("Sensors 2: ");
+        module.connectedSensors[1]->printInfo();
+
+        // a = module.connectedSensors[0]->get_period();
 
         Sched_Init();
-        Sched_AddT(func1, 10);
-        Sched_AddT(func2, 20);
-        Sched_AddT(func3, 30);
-        Sched_AddT(func4, 40);
+        // Sched_AddT(module.connectedSensors[0]->readSensor, 10.0);
+        // Sched_AddT(module.connectedSensors[1]->readSensor, module.connectedSensors[1]->get_period());
+        // Sched_AddT(func3, module.connectedSensors[0]->get_period());
+        // Sched_AddT(func4, 40);
         boot_count = 1;
-
-
     }
     // ************************************************************************************
 }

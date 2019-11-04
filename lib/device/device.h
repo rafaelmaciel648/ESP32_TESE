@@ -12,24 +12,34 @@
 extern "C" {
 #endif
 
-// struct moduleInfo{
-//     String id;
-//     String gpsLocation;
-// };
-
-void setConfiguration();
-
+/*
+*   Device class
+*/
 class Device{
     public:
-        String id;
-        String gpsLocation;
-        Sensor connectedSensors[MAX_SENSORS];
+        String id;                              // Device ID
+        String gpsLocation;                     // Device location
+        int nSensors;                           // Number of connected sensors
+        Sensor* connectedSensors[MAX_SENSORS];   // Connected Sensors
+        TempSensor temperatureSensor;
+        PhSensor phSensor;
+        // DissolvedOxygenSensor doSensor;
+        // ConductivitySensor conductivitySensor;
 
+        /*
+        *   Set the configuration of the device from settings in the 'config.xml' file
+        * */
         void setConfiguration();
 
-        String get_id();
+        /*
+        *   Set the sensors connected to the device
+        * */
+        void setSensors();
 
+        /* Getters functions */
+        String get_id();
         String get_location();
+        int get_nSensors();
         
 };
 
