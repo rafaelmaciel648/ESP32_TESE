@@ -27,19 +27,21 @@ void Device::setConfiguration(){
             n++;
         }
     }
-
     this->nSensors = n;
+
+    // this->adc_converter.begin();
+	// this->adc_converter.setGain(GAIN_ONE);
 };
 
 void Device::setSensors(){
     const String config = readFile("/config.xml");
     String sensors = getParam("connected_sensors", config);
-    String aux;
+    String sensor_config;
     String sensorFile;
 
     for(int i=0; i<this->nSensors; i++){
-        aux = getParamInIndice("sensor", sensors, i);
-        sensorFile = readFile("/sensors/" + getParam("sensorID", aux) + ".xml");
+        sensor_config = getParamInIndice("sensor", sensors, i);
+        sensorFile = readFile("/sensors/" + getParam("sensorID", sensor_config) + ".xml");
 
 
         if( getParam("param", sensorFile) == "temperature" ){
@@ -47,7 +49,7 @@ void Device::setSensors(){
             this->temperatureSensor = TempSensor(
                                         getParam("id", sensorFile),
                                         getParam("type", sensorFile),
-                                        (double)getParam("read_period", aux).toInt(),
+                                        (double)getParam("read_period", sensor_config).toInt(),
                                         (uint8_t)getParam("min", sensorFile).toInt(),
                                         (uint8_t)getParam("max", sensorFile).toInt(),
                                         (uint16_t)getParam("beta", sensorFile).toInt(),
@@ -60,7 +62,7 @@ void Device::setSensors(){
             this->phSensor = PhSensor(
                                         getParam("id", sensorFile),
                                         getParam("type", sensorFile),
-                                        (double)getParam("read_period", aux).toInt(),
+                                        (double)getParam("read_period", sensor_config).toInt(),
                                         (double)getParam("slope", sensorFile).toInt(),
                                         (double)getParam("isopotencial", sensorFile).toInt(),
                                         (double)getParam("iso_error", sensorFile).toInt(),
@@ -100,5 +102,11 @@ void Device::setSensors(){
     }
 };
 
+double Device::readTemperature(){
+    return 0.0;
+};
 
+double Device::readPH(){
+    return 0.0;
+};
 

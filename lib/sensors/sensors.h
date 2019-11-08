@@ -15,11 +15,11 @@ enum parameter{temperature, ph, dissolvedOxygen, conductivity};
 
 class Sensor{
     protected:
-        String id;                          // Sensor string ID
-        sensorType type;                    // Sensor type (digital/analog)
-        double readPeriod;                // Read period in seconds
-		parameter param;                    // Parameter (temperature, ph, dissolvedOxygen, conductivity)
-        uint8_t state;                      // State of sensor (state=0 if disconnected; state!=0 if connected)
+        String id;                  // Sensor string ID
+        sensorType type;            // Sensor type (digital/analog)
+        double readPeriod;          // Read period in seconds
+		parameter param;            // Parameter (temperature, ph, dissolvedOxygen, conductivity)
+        uint8_t state;              // State of sensor (state=0 if disconnected; state!=0 if connected)
 
     public:
 
@@ -39,6 +39,7 @@ class TempSensor: public Sensor{
         int8_t max_temp;                    // Maximum temperature reading
         uint16_t beta;                      // Beta value (25/85) in Kelvin
         uint16_t noLoadResistor;            // No load resistence at 25 celsius
+
         TempSensor();
         TempSensor(String id, String type, double period, int8_t min, int8_t max, uint16_t beta, uint16_t noLoadResistor);
         
@@ -59,9 +60,9 @@ class PhSensor: public Sensor{
         double isopotencial;                // voltage at 0 PH
 		double iso_error;                   // Error at isopotencial 0 PH in Volts
 		double impedance;                   // Output impedance at MOhms
+
         PhSensor();
         PhSensor(String id, String type, double period, double slope, double isopotencial, double iso_error, double impedance);
-        
         
         void readSensor();
         void printInfo();
@@ -103,67 +104,3 @@ void func4();
 #endif
 
 #endif
-
-
-// typedef struct tempSensor{
-//     String id;
-// 	sensorType type;
-// 	int readPeriod;
-// 	int8_t min_temp;
-//     int8_t max_temp;
-//     uint16_t beta;
-//     uint16_t noLoadResistor;
-// };
-
-// typedef struct phSensor{
-//     String id;
-// 	sensorType type;
-// 	int readPeriod;
-// 	double isopotencial;
-// 	double slope;
-// };
-
-// class Sensor{
-//     public:
-//         String id;
-//         sensorType type;
-//         int readPeriod;
-// };
-
-// class TempSensor: public Sensor{
-//     public:
-//         int8_t min_temp;
-//         int8_t max_temp;
-//         uint16_t beta;
-//         uint16_t noLoadResistor;
-//         TempSensor(String s, sensorType type, int period, int8_t min, int8_t max, uint16_t beta, uint16_t noLoadResistor){
-//             this->id = s;
-//             this->type = type;
-//             this->readPeriod = period;
-//             this->min_temp = min;
-//             this->max_temp = max;
-//             this->beta = beta;
-//             this->noLoadResistor;
-//         }
-// };
-
-// // TempSensor::TempSensor(String s, sensorType type, int period, int8_t min, int8_t max, uint16_t beta, uint16_t noLoadResistor){
-
-// // }
-
-
-// class PhSensor: public Sensor{
-//   public:
-//     //ADD specifications
-// };
-
-// class DoSensor: public Sensor{
-//   public:
-//     //ADD specifications
-// };
-
-// class CondSensor: public Sensor{
-//   public:
-//     //ADD specifications
-// };
-

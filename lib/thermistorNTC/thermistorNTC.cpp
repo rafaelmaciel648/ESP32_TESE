@@ -1,7 +1,9 @@
 #include "thermistorNTC.h"
 #include <math.h>
+#include <Adafruit_ADS1015.h>
 
-#define ADCresolution 65535
+#define refVoltage 3.3
+#define ADCresolution 32767
 
 Thermistor::Thermistor(const double referenceResistance, const double nominalResistance, const double nominalTemperatureCelsius, const double bValue){
 	this->referenceResistance = referenceResistance;
@@ -39,12 +41,28 @@ double Thermistor::resistanceToKelvins(const double resistance) {
 }
 
 double Thermistor::readResistance() {
-	return this->referenceResistance / (ADCresolution / readVoltage() - 1);
+	return this->referenceResistance / (refVoltage / readVoltage() - 1);
 }
 
 double Thermistor::readVoltage() {
-	// READ VOLTAGE OF ADC
-	return 0.0; //analogRead(this->pin);
+	Adafruit_ADS1115 adc;
+	adc.begin();
+	adc.setGain(GAIN_ONE);
+	switch (adc.getGain()){
+		case GAIN_TWOTHIRDS:
+			return adc.readADC_SingleEnded(0) * (6.144 / ADCresolution);
+		case GAIN_ONE:
+			return adc.readADC_SingleEnded(0) * (4.096 / ADCresolution);
+  		case GAIN_TWO:
+		  	return adc.readADC_SingleEnded(0) * (2.048 / ADCresolution);
+  		case GAIN_FOUR:
+			return adc.readADC_SingleEnded(0) * (1.024 / ADCresolution);
+  		case GAIN_EIGHT:
+			return adc.readADC_SingleEnded(0) * (0.512 / ADCresolution);
+  		case GAIN_SIXTEEN:
+			return adc.readADC_SingleEnded(0) * (0.256 / ADCresolution);
+	};
+	return;
 }
 
 double Thermistor::celsiusToKelvins(const double celsius) {

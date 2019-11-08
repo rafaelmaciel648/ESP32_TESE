@@ -59,7 +59,7 @@ class Thermistor{
 			R = R0 / (ADC / V - 1);
 			Where
 			R0 - nominal resistance at a nominal temperature,
-			ADC - analog port resolution (1023, for Arduino)
+			ADC - analog port resolution,
 			V - current voltage (analog port value).
 
 			@return resistance of the thermistor sensor.

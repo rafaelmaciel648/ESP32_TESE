@@ -1,27 +1,30 @@
 #include <Arduino.h>
-#include <time.h>
-#include <sys/time.h>
-#include <esp_bt.h>
-#include <esp_bt_main.h>
-#include <esp_wifi.h>
-#include <SPI.h>
-#include <SD.h>
+// #include <time.h>
+// #include <sys/time.h>
+// #include <esp_bt.h>
+// #include <esp_bt_main.h>
+// #include <esp_wifi.h>
+// #include <SPI.h>
+// #include <SD.h>
+// #include <Wire.h>
+// #include <Adafruit_ADS1015.h>
 
 #include "device.h"
 #include "scheduler.h"
-#include "sensors.h"
-#include "filemanager.h"
+// #include "sensors.h"
+// #include "filemanager.h"
+#include "utils.h"
 
+#define SLEEPMODE
 #define MAX_SENSORS 5
 
 RTC_DATA_ATTR int boot_count = 0;
 RTC_DATA_ATTR SchedTask tasks[10];
 RTC_DATA_ATTR Device module;
-// RTC_DATA_ATTR Sensor* connectedSensors[MAX_SENSORS];
+RTC_DATA_ATTR SensorValues lastReads;
 
 #define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
 #define TIME_TO_SLEEP  10        /* Time ESP32 will go to sleep (in seconds) */
-
 
 void setup(){
     //***** TURN OFF WIFI/BLUETOOTH **********//
@@ -39,9 +42,6 @@ void setup(){
 
     Serial.begin(115200);
 
-    double a;
-
-
     // ************************ROUTINE TO RUN ONLY ON SYSTEM BOOT *************************
     if(!boot_count){
 
@@ -53,18 +53,20 @@ void setup(){
         Serial.println(module.get_location());
         Serial.print("Number of Sensors: ");
         Serial.println(module.get_nSensors());
-        Serial.println("Sensors 1: ");
-        module.connectedSensors[0]->printInfo();
-        Serial.println("Sensors 2: ");
-        module.connectedSensors[1]->printInfo();
-
-        // a = module.connectedSensors[0]->get_period();
+        // Serial.println("Sensors 1: ");
+        // module.connectedSensors[0]->printInfo();
+        // Serial.println("Sensors 2: ");
+        // module.connectedSensors[1]->printInfo();
 
         Sched_Init();
-        // Sched_AddT(module.connectedSensors[0]->readSensor, 10.0);
+        
         // Sched_AddT(module.connectedSensors[1]->readSensor, module.connectedSensors[1]->get_period());
-        // Sched_AddT(func3, module.connectedSensors[0]->get_period());
-        // Sched_AddT(func4, 40);
+        
+        
+        Sched_AddT(func1, 10);
+        Sched_AddT(func2, 20);
+        Sched_AddT(func3, 30);
+        Sched_AddT(func4, 40);
         boot_count = 1;
     }
     // ************************************************************************************
@@ -85,10 +87,14 @@ void loop(){
     // 7- DEEPSLEEP
     // 8- WAIT NEXT INTERRUPT
 
-	// BEFORE GO SLEEP, CALCULATE SLEEPING TIME!!!!!!!!!!!!!!!
-    // esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
-    // esp_deep_sleep_start();
-    delay(10000);
+    #ifdef SLEEPMODE
+	// BEFORE GO SLEEP, CALCULATE TIME_TO_SLEEP!!!!!!!!!!!!!!!
+    esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
+    esp_deep_sleep_start();
+    #endif
+    #ifndef SLEEPMODE
+    delay(1000);
+    #endif
 }
 
 // struct tm date;
