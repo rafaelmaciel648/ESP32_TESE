@@ -87,6 +87,8 @@ void loop(){
     // 7- DEEPSLEEP
     // 8- WAIT NEXT INTERRUPT
 
+    module.temperatureSensor.readSensor();
+
     #ifdef SLEEPMODE
 	// BEFORE GO SLEEP, CALCULATE TIME_TO_SLEEP!!!!!!!!!!!!!!!
     esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);

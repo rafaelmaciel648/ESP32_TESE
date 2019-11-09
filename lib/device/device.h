@@ -4,8 +4,8 @@
 #define DEVICE_H
 
 #include <Arduino.h>
-#include <Adafruit_ADS1015.h>
 #include "sensors.h"
+#include <Adafruit_ADS1015.h>
 
 #define MAX_SENSORS 5
 
@@ -22,7 +22,7 @@ class Device{
         String id;                              // Device ID
         String gpsLocation;                     // Device location
         int nSensors;                           // Number of connected sensors
-        // Adafruit_ADS1115 adc_converter;
+        Adafruit_ADS1115 adc_converter;
         Sensor* connectedSensors[MAX_SENSORS];  // Connected Sensors
         TempSensor temperatureSensor;           // Temperature sensor object
         PhSensor phSensor;                      // PH sensor object

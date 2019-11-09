@@ -1,13 +1,14 @@
 #include "sensors.h"
-#include "thermistorNTC.h"
 #include "utils.h"
 #include "device.h"
 #include <Adafruit_ADS1015.h>
+#include <math.h>
 
 extern SensorValues lastReads;
 extern Device module;
 
 #define ADCresolution 32767
+#define vRef 3.3
 
 /*
 *
@@ -21,7 +22,7 @@ TempSensor::TempSensor(){
 }
 
 /* Constructor */
-TempSensor::TempSensor(String id, String type, double period, int8_t min, int8_t max, uint16_t beta, uint16_t noLoadResistor){
+TempSensor::TempSensor(String id, String type, double period, int8_t min, int8_t max, double beta, double noLoadResistor){
     this->id = id;
     this->state = 1;
 
@@ -37,6 +38,8 @@ TempSensor::TempSensor(String id, String type, double period, int8_t min, int8_t
 	this->max_temp = max;
 	this->beta = beta;
 	this->noLoadResistor = noLoadResistor;
+    this->resistanceSeries = noLoadResistor;
+    this->nominalTemperature = 25.0;
 }
 
 /* Temperature Read Function */
@@ -47,14 +50,42 @@ void TempSensor::readSensor(){
         // READ TEMPERATURE FROM DIGITAL SENSOR 1-WIRE
     }else if(this->type == analog){
         // READ TEMPERATURE FROM ADC
-        Thermistor thermometer(10000.0, this->noLoadResistor, 25.0, this->beta);
-        lastReads.temp = thermometer.readCelsius();
+
+        double voltage;
+        double resistanceNTC;
+        double inverseKelvin;
+        
+        switch ( module.adc_converter.getGain() ){
+            case GAIN_TWOTHIRDS:
+                voltage = module.adc_converter.readADC_SingleEnded(0) * (6.144 / ADCresolution);
+            case GAIN_ONE:
+                voltage = module.adc_converter.readADC_SingleEnded(0) * (4.096 / ADCresolution);
+            case GAIN_TWO:
+                voltage = module.adc_converter.readADC_SingleEnded(0) * (2.048 / ADCresolution);
+            case GAIN_FOUR:
+                voltage = module.adc_converter.readADC_SingleEnded(0) * (1.024 / ADCresolution);
+            case GAIN_EIGHT:
+                voltage = module.adc_converter.readADC_SingleEnded(0) * (0.512 / ADCresolution);
+            case GAIN_SIXTEEN:
+                voltage = module.adc_converter.readADC_SingleEnded(0) * (0.256 / ADCresolution);
+            default:
+                voltage = 1;
+        };
+
+        Serial.println(module.adc_converter.readADC_SingleEnded(0));
+
+        resistanceNTC = this->resistanceSeries / ( ( vRef / voltage ) - 1 );
+
+        inverseKelvin = ( 1 / this->celsiusToKelvin(this->nominalTemperature) ) + log( resistanceNTC / this->noLoadResistor ) / this->beta;
+
+        lastReads.temp = this->KelvinToCelsius( 1 / inverseKelvin );
 
         Serial.print("TEMP: "); Serial.println(lastReads.temp,5);
         return;
     }else{
         return;
     }
+    return;
 }
 
 /* Temperature Print Function */
@@ -67,6 +98,14 @@ void TempSensor::printInfo(){
                     "\n\tBeta Value: " + this->beta +
                     "\n\tNo load resistance: " + this->noLoadResistor + " Ohms"
     );
+};
+
+double TempSensor::celsiusToKelvin(double temperature){
+    return temperature + 273.1;
+};
+
+double TempSensor::KelvinToCelsius(double temperature){
+    return temperature - 273.1;
 };
 
 
@@ -125,7 +164,7 @@ void PhSensor::readSensor(){
         Adafruit_ADS1115 adc;
 	    adc.begin();
 	    adc.setGain(GAIN_ONE);
-        double voltage;
+        double voltage = 0;
 
         switch (adc.getGain()){
             case GAIN_TWOTHIRDS:

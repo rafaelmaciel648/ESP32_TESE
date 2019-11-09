@@ -37,14 +37,19 @@ class TempSensor: public Sensor{
     public:
         int8_t min_temp;                    // Minimum temperature reading
         int8_t max_temp;                    // Maximum temperature reading
-        uint16_t beta;                      // Beta value (25/85) in Kelvin
-        uint16_t noLoadResistor;            // No load resistence at 25 celsius
+        double beta;                      // Beta value (25/85) in Kelvin
+        double nominalTemperature;
+        double noLoadResistor;            // No load resistence at nominal temperature
+        double resistanceSeries;
 
         TempSensor();
-        TempSensor(String id, String type, double period, int8_t min, int8_t max, uint16_t beta, uint16_t noLoadResistor);
+        TempSensor(String id, String type, double period, int8_t min, int8_t max, double beta, double noLoadResistor);
         
         void readSensor();
         void printInfo();
+
+        double celsiusToKelvin(double temperature);
+        double KelvinToCelsius(double temperature);
 
         /**** Getters ****/
         sensorType get_type();
