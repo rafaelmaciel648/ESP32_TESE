@@ -29,8 +29,8 @@ void Device::setConfiguration(){
     }
     this->nSensors = n;
 
-    // this->adc_converter.begin();
-	// this->adc_converter.setGain(GAIN_ONE);
+    this->adc_converter.begin();
+	this->adc_converter.setGain(GAIN_ONE);
 };
 
 void Device::setSensors(){
@@ -52,8 +52,9 @@ void Device::setSensors(){
                                         (double)getParam("read_period", sensor_config).toInt(),
                                         (uint8_t)getParam("min", sensorFile).toInt(),
                                         (uint8_t)getParam("max", sensorFile).toInt(),
-                                        (uint16_t)getParam("beta", sensorFile).toInt(),
-                                        (uint16_t)getParam("no_load_resistance", sensorFile).toInt()
+                                        (double)getParam("beta", sensorFile).toInt(),
+                                        (double)getParam("no_load_resistance", sensorFile).toInt(),
+                                        (double)getParam("nominal_temperature", sensorFile).toInt()
                                         );
             this->connectedSensors[i] = &this->temperatureSensor;
         }

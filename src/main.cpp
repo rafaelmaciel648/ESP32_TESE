@@ -14,8 +14,9 @@
 // #include "sensors.h"
 // #include "filemanager.h"
 #include "utils.h"
+// #include "IO_WSSFM10.h"
 
-#define SLEEPMODE
+// #define SLEEPMODE
 #define MAX_SENSORS 5
 
 RTC_DATA_ATTR int boot_count = 0;
@@ -25,6 +26,8 @@ RTC_DATA_ATTR SensorValues lastReads;
 
 #define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
 #define TIME_TO_SLEEP  10        /* Time ESP32 will go to sleep (in seconds) */
+
+// typedef void (Sensor::*function)(void);
 
 void setup(){
     //***** TURN OFF WIFI/BLUETOOTH **********//
@@ -41,6 +44,26 @@ void setup(){
     // 2. Calculate LCM (least comun multiplier) to configure periodical interrupt
 
     Serial.begin(115200);
+
+    // IO_WSSFM10 mySigfox(2);
+
+    // Serial.print("TESTE BAUD: ");
+
+    // Serial.print("\nTESTE:\n");
+    // if( mySigfox.debug ){
+    //     Serial.print("In debug!\n");
+    // }else if( !mySigfox.debug ){
+    //     Serial.print("NO debug\n");
+    // }
+
+    // mySigfox.begin();
+    // delay(50);
+    // mySigfox.test();
+    // Serial.print("\nPRINT TEST: "); Serial.println(mySigfox.test());
+    // mySigfox.getID();
+    // Serial.print("\nPRINT ID: "); Serial.println(mySigfox.getID());
+    // mySigfox.getPAC();
+    // Serial.print("\nPRINT PAC: "); Serial.println(mySigfox.getPAC());
 
     // ************************ROUTINE TO RUN ONLY ON SYSTEM BOOT *************************
     if(!boot_count){
@@ -59,9 +82,8 @@ void setup(){
         // module.connectedSensors[1]->printInfo();
 
         Sched_Init();
-        
-        // Sched_AddT(module.connectedSensors[1]->readSensor, module.connectedSensors[1]->get_period());
-        
+
+        //Sched_AddT(module.connectedSensors[1]->Sensor::readSensor, module.connectedSensors[1]->get_period());
         
         Sched_AddT(func1, 10);
         Sched_AddT(func2, 20);

@@ -43,9 +43,10 @@ class TempSensor: public Sensor{
         double resistanceSeries;
 
         TempSensor();
-        TempSensor(String id, String type, double period, int8_t min, int8_t max, double beta, double noLoadResistor);
+        TempSensor(String id, String type, double period, int8_t min, int8_t max, double beta, double noLoadResistor, double nominalTemperature);
         
         void readSensor();
+        double readTemperature();
         void printInfo();
 
         double celsiusToKelvin(double temperature);
@@ -70,6 +71,7 @@ class PhSensor: public Sensor{
         PhSensor(String id, String type, double period, double slope, double isopotencial, double iso_error, double impedance);
         
         void readSensor();
+        double readPH();
         void printInfo();
 
         /**** Getters ****/

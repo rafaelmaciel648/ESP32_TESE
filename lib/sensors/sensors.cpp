@@ -8,7 +8,6 @@ extern SensorValues lastReads;
 extern Device module;
 
 #define ADCresolution 32767
-#define vRef 3.3
 
 /*
 *
@@ -22,7 +21,7 @@ TempSensor::TempSensor(){
 }
 
 /* Constructor */
-TempSensor::TempSensor(String id, String type, double period, int8_t min, int8_t max, double beta, double noLoadResistor){
+TempSensor::TempSensor(String id, String type, double period, int8_t min, int8_t max, double beta, double noLoadResistor, double nominalTemperature){
     this->id = id;
     this->state = 1;
 
@@ -39,12 +38,20 @@ TempSensor::TempSensor(String id, String type, double period, int8_t min, int8_t
 	this->beta = beta;
 	this->noLoadResistor = noLoadResistor;
     this->resistanceSeries = noLoadResistor;
-    this->nominalTemperature = 25.0;
+    this->nominalTemperature = nominalTemperature;
 }
 
 /* Temperature Read Function */
 void TempSensor::readSensor(){
-    Serial.println("Reading Temperature......................");
+    lastReads.temp = this->readTemperature();
+
+    Serial.print("TEMP: "); Serial.println(lastReads.temp,5);
+
+    return;
+}
+
+/* Temperature Read Function */
+double TempSensor::readTemperature(){
     
     if(this->type == digital){
         // READ TEMPERATURE FROM DIGITAL SENSOR 1-WIRE
@@ -54,38 +61,46 @@ void TempSensor::readSensor(){
         double voltage;
         double resistanceNTC;
         double inverseKelvin;
-        
+        double vRef;
+
         switch ( module.adc_converter.getGain() ){
             case GAIN_TWOTHIRDS:
                 voltage = module.adc_converter.readADC_SingleEnded(0) * (6.144 / ADCresolution);
+                vRef = module.adc_converter.readADC_SingleEnded(3) * (4.096 / ADCresolution);
+                break;
             case GAIN_ONE:
                 voltage = module.adc_converter.readADC_SingleEnded(0) * (4.096 / ADCresolution);
+                vRef = module.adc_converter.readADC_SingleEnded(3) * (4.096 / ADCresolution);
+                break;
             case GAIN_TWO:
                 voltage = module.adc_converter.readADC_SingleEnded(0) * (2.048 / ADCresolution);
+                vRef = module.adc_converter.readADC_SingleEnded(3) * (4.096 / ADCresolution);
+                break;
             case GAIN_FOUR:
                 voltage = module.adc_converter.readADC_SingleEnded(0) * (1.024 / ADCresolution);
+                vRef = module.adc_converter.readADC_SingleEnded(3) * (4.096 / ADCresolution);
+                break;
             case GAIN_EIGHT:
                 voltage = module.adc_converter.readADC_SingleEnded(0) * (0.512 / ADCresolution);
+                vRef = module.adc_converter.readADC_SingleEnded(3) * (4.096 / ADCresolution);
+                break;
             case GAIN_SIXTEEN:
                 voltage = module.adc_converter.readADC_SingleEnded(0) * (0.256 / ADCresolution);
+                vRef = module.adc_converter.readADC_SingleEnded(3) * (4.096 / ADCresolution);
+                break;
             default:
-                voltage = 1;
+                voltage = 1.0;
+                vRef = 1.0;
         };
 
-        Serial.println(module.adc_converter.readADC_SingleEnded(0));
-
         resistanceNTC = this->resistanceSeries / ( ( vRef / voltage ) - 1 );
-
         inverseKelvin = ( 1 / this->celsiusToKelvin(this->nominalTemperature) ) + log( resistanceNTC / this->noLoadResistor ) / this->beta;
+        return this->KelvinToCelsius( 1 / inverseKelvin );
 
-        lastReads.temp = this->KelvinToCelsius( 1 / inverseKelvin );
-
-        Serial.print("TEMP: "); Serial.println(lastReads.temp,5);
-        return;
     }else{
-        return;
+        return 0.0;
     }
-    return;
+    return 0.0;
 }
 
 /* Temperature Print Function */
@@ -96,7 +111,9 @@ void TempSensor::printInfo(){
                     "\n\tParam: " + this->param +
                     "\n\tRange: " + this->min_temp + " to " + this->max_temp + " celsius" +
                     "\n\tBeta Value: " + this->beta +
-                    "\n\tNo load resistance: " + this->noLoadResistor + " Ohms"
+                    "\n\tNo load resistance: " + this->noLoadResistor + " Ohms" +
+                    "\n\tSeries Resistance: " + this->resistanceSeries + " Ohms" +
+                    "\n\tNominal temperature: " + this->nominalTemperature + " Celsius"
     );
 };
 
@@ -167,7 +184,7 @@ void PhSensor::readSensor(){
         double voltage = 0;
 
         switch (adc.getGain()){
-            case GAIN_TWOTHIRDS:
+            case 0:
                 voltage = adc.readADC_SingleEnded(0) * (6.144 / ADCresolution);
             case GAIN_ONE:
                 voltage = adc.readADC_SingleEnded(0) * (4.096 / ADCresolution);
