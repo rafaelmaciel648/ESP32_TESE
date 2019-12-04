@@ -116,4 +116,5 @@ TODO:
 -implement:
     sigfox__get_tx_freq();
     sigfox__get_rx_freq();
+    reset
 */

@@ -1,11 +1,14 @@
 #include "sensors.h"
 #include "utils.h"
 #include "device.h"
+#include "LinkedList.h"
 #include <Adafruit_ADS1015.h>
 #include <math.h>
 
-extern SensorValues lastReads;
+#define DEBUG_SENSORS
+
 extern Device module;
+extern LinkedList<DataItemList*> dataValues;
 
 #define ADCresolution 32767
 
@@ -43,10 +46,6 @@ TempSensor::TempSensor(String id, String type, double period, int8_t min, int8_t
 
 /* Temperature Read Function */
 void TempSensor::readSensor(){
-    lastReads.temp = this->readTemperature();
-
-    Serial.print("TEMP: "); Serial.println(lastReads.temp,5);
-
     return;
 }
 
@@ -63,10 +62,12 @@ double TempSensor::readTemperature(){
         double inverseKelvin;
         double vRef;
 
+        module.adc_converter.setGain(GAIN_ONE);
+
         switch ( module.adc_converter.getGain() ){
             case GAIN_TWOTHIRDS:
                 voltage = module.adc_converter.readADC_SingleEnded(0) * (6.144 / ADCresolution);
-                vRef = module.adc_converter.readADC_SingleEnded(3) * (4.096 / ADCresolution);
+                vRef = module.adc_converter.readADC_SingleEnded(3) * (6.144 / ADCresolution);
                 break;
             case GAIN_ONE:
                 voltage = module.adc_converter.readADC_SingleEnded(0) * (4.096 / ADCresolution);
@@ -74,19 +75,19 @@ double TempSensor::readTemperature(){
                 break;
             case GAIN_TWO:
                 voltage = module.adc_converter.readADC_SingleEnded(0) * (2.048 / ADCresolution);
-                vRef = module.adc_converter.readADC_SingleEnded(3) * (4.096 / ADCresolution);
+                vRef = module.adc_converter.readADC_SingleEnded(3) * (2.048 / ADCresolution);
                 break;
             case GAIN_FOUR:
                 voltage = module.adc_converter.readADC_SingleEnded(0) * (1.024 / ADCresolution);
-                vRef = module.adc_converter.readADC_SingleEnded(3) * (4.096 / ADCresolution);
+                vRef = module.adc_converter.readADC_SingleEnded(3) * (1.024 / ADCresolution);
                 break;
             case GAIN_EIGHT:
                 voltage = module.adc_converter.readADC_SingleEnded(0) * (0.512 / ADCresolution);
-                vRef = module.adc_converter.readADC_SingleEnded(3) * (4.096 / ADCresolution);
+                vRef = module.adc_converter.readADC_SingleEnded(3) * (0.512 / ADCresolution);
                 break;
             case GAIN_SIXTEEN:
                 voltage = module.adc_converter.readADC_SingleEnded(0) * (0.256 / ADCresolution);
-                vRef = module.adc_converter.readADC_SingleEnded(3) * (4.096 / ADCresolution);
+                vRef = module.adc_converter.readADC_SingleEnded(3) * (0.256 / ADCresolution);
                 break;
             default:
                 voltage = 1.0;
@@ -105,6 +106,7 @@ double TempSensor::readTemperature(){
 
 /* Temperature Print Function */
 void TempSensor::printInfo(){
+    #ifdef DEBUG_SENSORS
     Serial.print(   "\n\tID: " + this->id +
                     "\n\tType: " + this->type +
                     "\n\tPeriod: " + this->readPeriod + " second" +
@@ -113,8 +115,9 @@ void TempSensor::printInfo(){
                     "\n\tBeta Value: " + this->beta +
                     "\n\tNo load resistance: " + this->noLoadResistor + " Ohms" +
                     "\n\tSeries Resistance: " + this->resistanceSeries + " Ohms" +
-                    "\n\tNominal temperature: " + this->nominalTemperature + " Celsius"
+                    "\n\tNominal temperature: " + this->nominalTemperature + " Celsius\n"
     );
+    #endif
 };
 
 double TempSensor::celsiusToKelvin(double temperature){
@@ -170,7 +173,7 @@ PhSensor::PhSensor(String id, String type, double period, double slope, double i
 void PhSensor::readSensor(){
     const double F = 96485.3329;          // Faraday Constant C/mol
     const double R = 8.314462;            // Ideal Gas Constant (J/Kmol)
-    const double T = 0.0;
+    const double T = module.temperatureSensor.readTemperature();
 
     Serial.println("Reading PH......................");
 
@@ -182,6 +185,7 @@ void PhSensor::readSensor(){
 	    adc.begin();
 	    adc.setGain(GAIN_ONE);
         double voltage = 0;
+        double ph;
 
         switch (adc.getGain()){
             case 0:
@@ -198,23 +202,24 @@ void PhSensor::readSensor(){
                 voltage = adc.readADC_SingleEnded(0) * (0.256 / ADCresolution);
 	    };
 
-        lastReads.ph = voltage / ( ( -2.303 * R * T ) / F ) + 7;
+        ph = voltage / ( ( -2.303 * R * T ) / F ) + 7;
         return;
     }else{
         return;
     }
 }
 
-/* PH Print Function */
 void PhSensor::printInfo(){
+    #ifdef DEBUG_SENSORS
     Serial.print(   "\n\tID: " + this->id +
                     "\n\tType: " + this->type +
                     "\n\tPeriod: " + this->readPeriod + " second" +
                     "\n\tParam: " + this->param +
                     "\n\tSlope: " + this->slope + " V/pH" +
                     "\n\tIsopotencial: " + this->isopotencial + " V +/-" + this->iso_error + " V"
-                    "\n\tNo load resistance: " + this->impedance + " Ohms"
+                    "\n\tNo load resistance: " + this->impedance + " Ohms\n"
     );
+    #endif
 };
 
 // DissolvedOxygenSensor::DissolvedOxygenSensor(){};
@@ -240,18 +245,36 @@ uint8_t Sensor::get_state(){
 };
 
 
-void func1(){
-    Serial.println("print FUNC_1");
+void readTemp(){
+    Serial.print("Temperature: ");
+    double temp;
+    DataItemList *data = new DataItemList();
+    temp = module.temperatureSensor.readTemperature();          // Read temperature
+
+
+    data->param = temperature;
+    data->value = temp;
+    // read.date = TIME;
+    dataValues.add(data);
+
+    Serial.print(temp); Serial.println(" C");
+
+    return;
 }
 
-void func2(){
-    Serial.println("print FUNC_2");
-}
+void readPh(){
+    Serial.print("PH: ");
+    double ph_read;
+    DataItemList *data = new DataItemList();
+    ph_read = random(1,14);         // Read PH
 
-void func3(){
-    Serial.println("print FUNC_3");
-}
 
-void func4(){
-    Serial.println("print FUNC_4");
+    data->param = ph;
+    data->value = ph_read;
+    // read.date = TIME;
+    dataValues.add(data);
+
+    Serial.println(ph_read);
+
+    return;
 }

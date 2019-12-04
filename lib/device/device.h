@@ -22,31 +22,29 @@ class Device{
         String id;                              // Device ID
         String gpsLocation;                     // Device location
         int nSensors;                           // Number of connected sensors
-        Adafruit_ADS1115 adc_converter;
+        Adafruit_ADS1115 adc_converter;         // ADC converter for analog sensors
         Sensor* connectedSensors[MAX_SENSORS];  // Connected Sensors
         TempSensor temperatureSensor;           // Temperature sensor object
         PhSensor phSensor;                      // PH sensor object
         // DissolvedOxygenSensor doSensor;
         // ConductivitySensor conductivitySensor;
 
-/**
- * Set the configuration of the device from settings in the 'config.xml' file
-*/
+        /**
+         * Set the configuration of the device from settings in the 'config.xml' file
+         */
         void setConfiguration();
 
-/**
- * Set the sensors connected to the device
-*/
+        /**
+         * Set the sensors connected to the device
+         */
         void setSensors();
 
-        double readTemperature();
-        double readPH();
+        // double readTemperature();
+        // double readPH();
         // double readDissolvedOxygen();
         // double readConductivity();
 
-/**
- * Getters functions
-*/
+        /*** Getters functions ***/
         String get_id();
         String get_location();
         int get_nSensors();

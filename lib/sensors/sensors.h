@@ -10,8 +10,16 @@ extern "C" {
 #endif
 
 
-enum sensorType{digital, analog};
-enum parameter{temperature, ph, dissolvedOxygen, conductivity};
+enum sensorType{
+                digital = 1,
+                analog = 2
+            };
+enum parameter{
+                temperature = 1,
+                ph = 2,
+                dissolvedOxygen = 3,
+                conductivity = 4
+            };
 
 class Sensor{
     protected:
@@ -23,13 +31,49 @@ class Sensor{
 
     public:
 
+        /**
+         * Get sensor ID
+         * @return String with ID
+         */
         String get_id();
+
+        /**
+         * Get sensor type
+         * @return  1 if sensor DIGITAL
+         *          2 if sensor ANALOG
+         */
         sensorType get_type();
+
+        /**
+         * Get read period of sensor
+         * @return  period in seconds
+         */
         double get_period();
+
+        /**
+         * Get sensor parameter
+         * @return  1 if sensor temperature
+         *          2 if sensor ph
+         *          3 if dissolved oxygen
+         *          4 if conductivity
+         */
         parameter get_param();
+
+        /**
+         * Get state of sensor
+         * @return  0 if sensor disconnected
+         *          1 if sensor connected and READY
+         */
         uint8_t get_state();
 
+        /**
+         * Function to read sensor
+         */
         virtual void readSensor() = 0;
+
+        /**
+         * Debug function to print sensor information
+         */
         virtual void printInfo() = 0;
 };
 
@@ -42,22 +86,35 @@ class TempSensor: public Sensor{
         double noLoadResistor;            // No load resistence at nominal temperature
         double resistanceSeries;
 
+        /**
+         * Constructors
+         */
         TempSensor();
         TempSensor(String id, String type, double period, int8_t min, int8_t max, double beta, double noLoadResistor, double nominalTemperature);
         
         void readSensor();
-        double readTemperature();
         void printInfo();
 
+        /**
+         * Read the value of sensor
+         * @return the value of temperature measured
+         */
+        double readTemperature();
+
+        /**
+         * Convert temperature Celsisus to Kelvin
+         * @param temperature in Celsius
+         * @return temperatur in Kelvin
+         */
         double celsiusToKelvin(double temperature);
+
+        /**
+         * Convert temperature Kelvin to Celsisus
+         * @param temperature in Kelvin
+         * @return temperatur in Celsius
+         */
         double KelvinToCelsius(double temperature);
 
-        /**** Getters ****/
-        sensorType get_type();
-        String get_id();
-        double get_period();
-        parameter get_param();
-        uint8_t get_state();
 };
 
 class PhSensor: public Sensor{
@@ -67,19 +124,21 @@ class PhSensor: public Sensor{
 		double iso_error;                   // Error at isopotencial 0 PH in Volts
 		double impedance;                   // Output impedance at MOhms
 
+        /**
+         * Constructors
+         */
         PhSensor();
         PhSensor(String id, String type, double period, double slope, double isopotencial, double iso_error, double impedance);
         
         void readSensor();
-        double readPH();
         void printInfo();
 
-        /**** Getters ****/
-        String get_id();
-        sensorType get_type();
-        double get_period();
-        parameter get_param();
-        uint8_t get_state();
+        /**
+         * Read the value of sensor
+         * @return the value of temperature measured
+         */
+        double readPH();
+
 };
 
 // class DissolvedOxygenSensor: public Sensor{
@@ -94,16 +153,9 @@ class PhSensor: public Sensor{
 //         ConductivitySensor();
 // };
 
+void readTemp();
 
-
-
-void func1();
-
-void func2();
-
-void func3();
-
-void func4();
+void readPh();
 
 
 #ifdef __cplusplus

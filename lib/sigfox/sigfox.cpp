@@ -10,6 +10,8 @@
 
 #define SIGFOX_DEBUG
 
+#define SIGFOX_FRAME_LENGTH 12
+
 /**
  * Command array
  */
@@ -139,25 +141,40 @@ String NetworkDevice::getPAC(void){
 }
 
 bool NetworkDevice::send(const void* payload, uint8_t size){
-	if( size > 12 ){
+	if( size > SIGFOX_FRAME_LENGTH ){
 		#ifdef SIGFOX_DEBUG
 			Serial.println("BUFFER TO SEND IS OVERSIZE");
 		#endif
 		return false;
 	}
 
-	uint8_t* bytes = (uint8_t*)payload;
+	String frame = "";
 
-	sigfox.print("AT$SF=");
-	for(uint8_t i=0; i<size; i++){
-		sigfox.print(bytes[i]);
-		#ifdef SIGFOX_DEBUG
-			Serial.print("BYTE: ");
-			Serial.println(bytes[i], HEX);
-		#endif
+	if( size < SIGFOX_FRAME_LENGTH ){		// fill with zeros
+		uint8_t i = SIGFOX_FRAME_LENGTH;
+    	while(i > size){
+      		frame += "00";
+			i--;
+    	}
 	}
 
-	sigfox.print("\r\n");
+	uint8_t* bytes = (uint8_t*)payload;
+
+	for(uint8_t i = size-1; i < size; i--) {
+		if (bytes[i] < 16){
+			frame += "0";
+		}
+		frame += String(bytes[i], HEX);
+	}
+
+	#ifdef SIGFOX_DEBUG
+		Serial.print("FRAME: ");
+		Serial.println(frame);
+	#endif
+
+	String cmd = String(sigfox_AT_cmd[CMD_SEND_FRAME]);
+
+	sigfox.print(cmd + frame + "\r\n");
 
 	while (!sigfox.available()){
 		blink();
@@ -176,14 +193,14 @@ bool NetworkDevice::send(const void* payload, uint8_t size){
 }
 
 bool NetworkDevice::sendString(String str, uint8_t size){
-	if( size > 12 ){
+	if( size > 24 ){
 		#ifdef SIGFOX_DEBUG
 			Serial.println("STRING TO SEND IS OVERSIZE");
 		#endif
 		return false;
 	}
 
-	String cmd = "AT$SF=";
+	String cmd = String(sigfox_AT_cmd[CMD_SEND_FRAME]);
 
 	sigfox.print(cmd + str + "\r\n");
 
@@ -195,7 +212,7 @@ bool NetworkDevice::sendString(String str, uint8_t size){
 
 	if(res.indexOf("OK") >= 0) {
 		#ifdef SIGFOX_DEBUG
-			Serial.println("MESSAGE SENT");
+			Serial.println("STRING SENT");
 		#endif
 		return true;
 	}

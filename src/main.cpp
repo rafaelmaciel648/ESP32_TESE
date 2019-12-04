@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <iostream>
 // #include <time.h>
 // #include <sys/time.h>
 // #include <esp_bt.h>
@@ -11,12 +12,12 @@
 
 #include "device.h"
 #include "scheduler.h"
-// #include "sensors.h"
+#include "sensors.h"
 // #include "filemanager.h"
 #include "utils.h"
 #include "sigfox.h"
-// #include "IO_WSSFM10.h"
-// #include "wisol_sigfox.h"
+#include "LinkedList.h"
+#include "datalogger.h"
 
 #define DEBUG
 #define LED_TEST 13
@@ -29,19 +30,33 @@
 RTC_DATA_ATTR int boot_count = 0;
 RTC_DATA_ATTR SchedTask tasks[10];
 RTC_DATA_ATTR Device module;
-RTC_DATA_ATTR SensorValues lastReads;
-NetworkDevice mySigfox;
+// RTC_DATA_ATTR sensorValues lastReads;
+RTC_DATA_ATTR NetworkDevice mySigfox;
+RTC_DATA_ATTR LinkedList<DataItemList*> dataValues = LinkedList<DataItemList*>();
+RTC_DATA_ATTR payload payload_data;
 
-#define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
-#define TIME_TO_SLEEP  10        /* Time ESP32 will go to sleep (in seconds) */
+#define uS_TO_S_FACTOR 1000000      /* Conversion factor for micro seconds to seconds */
+#define TIME_TO_SLEEP  10           /* Time ESP32 will go to sleep (in seconds) */
 
 void setup(){
     pinMode(LED_TEST,OUTPUT);
     digitalWrite(LED_TEST, LOW);
-    pinMode(START_BUTTON, INPUT);
+    
     pinMode(WAKEUP_PIN, INPUT_PULLUP);
 
-    //***** TURN OFF WIFI/BLUETOOTH **********//
+    pinMode(START_BUTTON, INPUT);
+    while( !digitalRead(START_BUTTON) ){
+    }
+    Serial.println("STARTING PROGRAM!\n");
+    delay(500);
+
+    #ifdef DEBUG
+        Serial.begin(115200);
+    #endif
+
+    Serial.print("PAYLOAD SIZE: "); Serial.println(sizeof(payload));
+
+    //***** TURN OFF WIFI/BLUETOOTH **********// NEED CHECK IF ALWAYS OR JUST ON BOOT MENU
     // esp_bluedroid_disable();
     // esp_bluedroid_deinit();
     // esp_bt_controller_disable();
@@ -49,57 +64,50 @@ void setup(){
     // esp_bt_mem_release(ESP_BT_MODE_BTDM);
     // esp_wifi_stop();
     // esp_wifi_deinit();
-
-
-    // 1. CONFIG init, sensors...
-    // 2. Calculate LCM (least comun multiplier) to configure periodical interrupt
-
-    #ifdef DEBUG
-        Serial.begin(115200);
-    #endif
-
+    
     mySigfox.begin();
-
-    while( !digitalRead(START_BUTTON) ){
-    }
-    Serial.println("STARTING PROGRAM!\n");
-    delay(500);
-
-    if(mySigfox.ready()){
-        Serial.println("Sigfox is ready!");
-        Serial.println("ID: " + mySigfox.getID());
-        Serial.println("PAC: " + mySigfox.getPAC());
-
-        Serial.print("Entering in sleep mode... ");
-        mySigfox.deepSleep();
-        Serial.println("Sleeping...");
-        delay(5000);
-        Serial.println("Wake up from sleep!");
-        mySigfox.wakeUpDeepSleep();
-    }else{
-        Serial.println("Sigfox is NOT ready!");
-    }
 
     // ************************ROUTINE TO RUN ONLY ON SYSTEM BOOT *************************
     if(!boot_count){
 
+        if( mySigfox.ready() ){
+            #ifdef DEBUG
+                Serial.println("Sigfox is ready!");
+                Serial.println("main():ID: " + mySigfox.getID());
+                Serial.println("main():PAC: " + mySigfox.getPAC());
+            #endif
+        }else{
+            #ifdef DEBUG
+                Serial.println("Sigfox is NOT ready!");
+            #endif
+        }
+
+        // mySigfox.send(&struct_aux, sizeof(struct_aux));
+
+        newLogFile("/data/logger.txt");
+
+        // 1. CONFIG init, sensors...
         module.setConfiguration();
         module.setSensors();
-        Serial.print("ID: ");
-        Serial.println(module.get_id());
-        Serial.print("Location: ");
-        Serial.println(module.get_location());
-        Serial.print("Number of Sensors: ");
-        Serial.println(module.get_nSensors());
+
+        #ifdef DEBUG
+            Serial.print("ID: ");
+            Serial.println(module.get_id());
+            Serial.print("Location: ");
+            Serial.println(module.get_location());
+            Serial.print("Number of Sensors: ");
+            Serial.println(module.get_nSensors());
+        #endif
+
+        // 2. Calculate LCM (least comun multiplier) to configure periodical wakeup
+
 
         Sched_Init();
 
-        //Sched_AddT(module.connectedSensors[1]->Sensor::readSensor, module.connectedSensors[1]->get_period());
-        
-        Sched_AddT(func1, 10);
-        Sched_AddT(func2, 20);
-        Sched_AddT(func3, 30);
-        Sched_AddT(func4, 40);
+        // HERE ADD FUNCTIONS OF READING SENSORS
+        Sched_AddT(readTemp, module.connectedSensors[0]->get_period());
+        Sched_AddT(readPh, module.connectedSensors[1]->get_period());
+
         boot_count = 1;
     }
     // ************************************************************************************
@@ -114,21 +122,21 @@ void loop(){
     Sched_Dispatch();
 
     // 3- PROCESS THIS DATA CYCLE
+
+
     // 4- SAVE THIS DATA CYCLE
+    logData();
     // 5- CHECK ALARMS
+
     // 6- SIGFOX COMMUNICATION
+
     // 7- DEEPSLEEP
-    // 8- WAIT NEXT INTERRUPT
-
-    module.temperatureSensor.readSensor();
-
-    Serial.println("ID: " + mySigfox.getID());
-
     #ifdef SLEEPMODE
         // BEFORE GO SLEEP, CALCULATE TIME_TO_SLEEP!!!!!!!!!!!!!!!
         esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
         esp_deep_sleep_start();
     #endif
+    // 8- WAIT NEXT INTERRUPT
     #ifndef SLEEPMODE
         delay(1000);
     #endif

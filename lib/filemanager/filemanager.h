@@ -14,35 +14,33 @@
 extern "C" {
 #endif
 
-/*
-*   Get the tag value of a XML file
-*   Parameters:
-*       param -> pointer to the tag to be searched
-*       file -> file string
-*   Return:
-*       String of tag value
-*/
+/**
+ * Get the tag value of a XML file
+ * @param param - pointer to the tag to be searched
+ * @param file - file string
+ * @return String of tag value
+ */
 String getParam(const char* param, String file);
 
-/*
-*   Get the tag value of a XML file in position i
-*   Parameters:
-*       param -> pointer to the tag to be searched
-*       file -> file string
-*       i -> the indice of the menber tag
-*   Return:
-*       String of tag value
-*/
+/**
+ * Get the tag value of XML file in position i
+ * @param param - pointer to the tag to be searched
+ * @param file - file string
+ * @param i - the indice of the menber tag
+ * @return String of tag value
+ */
 String getParamInIndice(const char* param, String file, int i);
 
-/*
-*   Read a XML file
-*   Parameters:
-*       filename -> filename to be read (include folder path)
-*   Return:
-*       String with the content of the file
+/**
+ * Read a XML file
+ * @param filename - filename to be read (include folder path)
+ * @return String with the content of the file
 */
 String readFile(String filename);
+
+bool writeFile(String filename, String toWrite);
+
+bool createBlankFile(String filename);
 
 #ifdef __cplusplus
 }

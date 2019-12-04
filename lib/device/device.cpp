@@ -50,8 +50,8 @@ void Device::setSensors(){
                                         getParam("id", sensorFile),
                                         getParam("type", sensorFile),
                                         (double)getParam("read_period", sensor_config).toInt(),
-                                        (uint8_t)getParam("min", sensorFile).toInt(),
-                                        (uint8_t)getParam("max", sensorFile).toInt(),
+                                        (int8_t)getParam("min", sensorFile).toInt(),
+                                        (int8_t)getParam("max", sensorFile).toInt(),
                                         (double)getParam("beta", sensorFile).toInt(),
                                         (double)getParam("no_load_resistance", sensorFile).toInt(),
                                         (double)getParam("nominal_temperature", sensorFile).toInt()
@@ -103,11 +103,11 @@ void Device::setSensors(){
     }
 };
 
-double Device::readTemperature(){
-    return 0.0;
-};
+// double Device::readTemperature(){
+//     return 0.0;
+// };
 
-double Device::readPH(){
-    return 0.0;
-};
+// double Device::readPH(){
+//     return 0.0;
+// };
 
