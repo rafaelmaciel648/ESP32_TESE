@@ -253,7 +253,7 @@ void readTemp(){
 
     data->param = temperature;
     data->value = temp;
-    data->timestamp = getDate();
+    data->timestamp = getCurrentTime();
     dataValues.add(data);
 
     // Serial.print(temp); Serial.println(" C");
@@ -270,7 +270,7 @@ void readPh(){
 
     data->param = ph;
     data->value = ph_read;
-    data->timestamp = getDate();
+    data->timestamp = getCurrentTime();
     dataValues.add(data);
 
     // Serial.println(ph_read);

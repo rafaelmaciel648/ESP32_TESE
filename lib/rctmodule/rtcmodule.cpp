@@ -70,7 +70,7 @@ void updateRTC(){
 }
 #endif
 
-String getDate(){
+String getCurrentTime(){
     byte second, minute, hour, dayOfWeek, dayOfMonth, month, year;
     // retrieve data from DS1307
     readDS1307time(&second, &minute, &hour, &dayOfWeek, &dayOfMonth, &month, &year);
@@ -86,6 +86,27 @@ String getDate(){
 
     char date_format[30];
 	strftime(date_format, 30, "%d/%m/%Y , %H:%M:%S", &date);
+
+    String date_string = String(date_format);
+    return date_string;
+}
+
+String getDate(){
+    byte second, minute, hour, dayOfWeek, dayOfMonth, month, year;
+    // retrieve data from DS1307
+    readDS1307time(&second, &minute, &hour, &dayOfWeek, &dayOfMonth, &month, &year);
+
+    struct tm date;
+    date.tm_sec = second;
+    date.tm_min = minute;
+    date.tm_hour = hour;
+    date.tm_wday = dayOfWeek - 1;
+    date.tm_mday = dayOfMonth;
+    date.tm_mon = month - 1;
+    date.tm_year = year + 100;
+
+    char date_format[45];
+	strftime(date_format, 45, "%A, %e %B %Y, %H:%M:%S", &date);
 
     String date_string = String(date_format);
     return date_string;

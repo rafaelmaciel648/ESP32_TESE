@@ -21,6 +21,8 @@ void updateRTC();
 
 String getDate();
 
+String getCurrentTime();
+
 #ifdef __cplusplus
 }
 #endif
