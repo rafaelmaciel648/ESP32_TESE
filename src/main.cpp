@@ -1,31 +1,33 @@
 #include <Arduino.h>
-#include <iostream>
-// #include <time.h>
-// #include <sys/time.h>
+#include <time.h>
+#include <sys/time.h>
 // #include <esp_bt.h>
 // #include <esp_bt_main.h>
 // #include <esp_wifi.h>
 // #include <SPI.h>
 // #include <SD.h>
-// #include <Wire.h>
+#include <Wire.h>
 // #include <Adafruit_ADS1015.h>
 
 #include "device.h"
 #include "scheduler.h"
 #include "sensors.h"
 // #include "filemanager.h"
-#include "utils.h"
+#include "myutils.h"
 #include "sigfox.h"
 #include "LinkedList.h"
 #include "datalogger.h"
+#include "rtcmodule.h"
 
-#define DEBUG
+// #define UPDATE_RTC
+
+#ifdef UPDATE_RTC
+#include "unixtime.h"
+#endif
+
 #define LED_TEST 13
 #define START_BUTTON 34
 #define WAKEUP_PIN 12
-
-// #define SLEEPMODE
-#define MAX_SENSORS 5
 
 RTC_DATA_ATTR int boot_count = 0;
 RTC_DATA_ATTR SchedTask tasks[10];
@@ -35,26 +37,43 @@ RTC_DATA_ATTR NetworkDevice mySigfox;
 RTC_DATA_ATTR LinkedList<DataItemList*> dataValues = LinkedList<DataItemList*>();
 RTC_DATA_ATTR payload payload_data;
 
+#define MAX_SENSORS 5
+
+
+// #define SLEEPMODE
 #define uS_TO_S_FACTOR 1000000      /* Conversion factor for micro seconds to seconds */
 #define TIME_TO_SLEEP  10           /* Time ESP32 will go to sleep (in seconds) */
 
+struct tm data;
+
 void setup(){
-    pinMode(LED_TEST,OUTPUT);
+    pinMode(LED_TEST,OUTPUT);                       // Test led. Waiting message sigfox
     digitalWrite(LED_TEST, LOW);
     
-    pinMode(WAKEUP_PIN, INPUT_PULLUP);
+    pinMode(WAKEUP_PIN, INPUT_PULLUP);              // Pin wake up Sigfox
 
+    // START BUTTON *************************
     pinMode(START_BUTTON, INPUT);
     while( !digitalRead(START_BUTTON) ){
     }
     Serial.println("STARTING PROGRAM!\n");
     delay(500);
+    // **************************************
 
     #ifdef DEBUG
         Serial.begin(115200);
+        while(!Serial);
+    #endif
+    Wire.begin();
+    mySigfox.begin();
+
+    #ifdef UPDATE_RTC
+        updateRTC();
     #endif
 
     Serial.print("PAYLOAD SIZE: "); Serial.println(sizeof(payload));
+
+    
 
     //***** TURN OFF WIFI/BLUETOOTH **********// NEED CHECK IF ALWAYS OR JUST ON BOOT MENU
     // esp_bluedroid_disable();
@@ -65,11 +84,25 @@ void setup(){
     // esp_wifi_stop();
     // esp_wifi_deinit();
     
-    mySigfox.begin();
+    // timeval tv;//Cria a estrutura temporaria para funcao abaixo.
+	// tv.tv_sec = 1551362400;//Atribui minha data atual. Voce pode usar o NTP para isso ou o site citado no artigo!
+	// settimeofday(&tv, NULL);//Configura o RTC para manter a data atribuida atualizada.
+
+    // time_t tt = time(NULL);//Obtem o tempo atual em segundos. Utilize isso sempre que precisar obter o tempo atual
+	// data = *gmtime(&tt);//Converte o tempo atual e atribui na estrutura
+
+	// char data_formatada[64];
+	// strftime(data_formatada, 64, "%d/%m/%Y %H:%M:%S", &data);//Cria uma String formatada da estrutura "data"
+ 
+	// Serial.printf("\nUnix Time: %d\n", int32_t(tt));//Mostra na Serial o Unix time
+	// Serial.printf("Data formatada: %s\n", data_formatada);//Mostra na Serial a data formatada
+
+    
 
     // ************************ROUTINE TO RUN ONLY ON SYSTEM BOOT *************************
     if(!boot_count){
 
+        Serial.println(getDate());
         if( mySigfox.ready() ){
             #ifdef DEBUG
                 Serial.println("Sigfox is ready!");
@@ -82,9 +115,13 @@ void setup(){
             #endif
         }
 
-        // mySigfox.send(&struct_aux, sizeof(struct_aux));
+        // mySigfox.send(&payload_data, sizeof(payload));
 
-        newLogFile("/data/logger.txt");
+        newLogFile("/log/datalogger.txt");
+        newLogFile("/log/logTemp.txt");
+        newLogFile("/log/logPh.txt");
+        newLogFile("/log/logDo.txt");
+        newLogFile("/log/logCond.txt");
 
         // 1. CONFIG init, sensors...
         module.setConfiguration();
@@ -142,8 +179,40 @@ void loop(){
     #endif
 }
 
-// struct tm date;
+
     // time_t tt = time(NULL);
     // date = *gmtime(&tt);//Converte o tempo atual e atribui na estrutura
     // char date_format[64];
 	// strftime(date_format, 64, "%d/%m/%Y %H:%M:%S", &date);//Cria uma String formatada da estrutura "data"
+
+	// time_t tt = time(NULL);//Obtem o tempo atual em segundos. Utilize isso sempre que precisar obter o tempo atual
+	// data = *gmtime(&tt);//Converte o tempo atual e atribui na estrutura
+ 
+		
+	// 	char data_formatada[64];
+	// 	strftime(data_formatada, 64, "%d/%m/%Y %H:%M:%S", &data);//Cria uma String formatada da estrutura "data"
+ 
+ 
+	// 	printf("\nUnix Time: %d\n", int32_t(tt));//Mostra na Serial o Unix time
+	// 	printf("Data formatada: %s\n", data_formatada);//Mostra na Serial a data formatada
+ 
+ 
+ 
+ 
+// 		/*
+// 			Com o Unix time, podemos facilmente controlar acoes do MCU por data, visto que utilizaremos os segundos
+// 			e sao faceis de usar em IFs
+ 
+// 			Voce pode criar uma estrutura com a data desejada e depois converter para segundos (inverso do que foi feito acima)
+// 			caso deseje trabalhar para atuar em certas datas e horarios
+ 
+// 			No exemplo abaixo, o MCU ira printar o texto **APENAS** na data e horario (28/02/2019 12:00:05) ate (28/02/2019 12:00:07)
+// 		*/
+// 		if (tt >= 1551355205 && tt < 1551355208)//Use sua data atual, em segundos, para testar o acionamento por datas e horarios
+// 		{
+// 			printf("Acionando carga durante 3 segundos...\n");
+// 		}
+// 	}
+ 
+	
+// }

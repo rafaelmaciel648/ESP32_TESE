@@ -89,3 +89,11 @@ bool createBlankFile(String filename){
         }
     }
 }
+
+// bool checkExistFile(String filename){
+//     while(!SD.begin(SS));
+
+//     if( SD.exists(filename) ){
+
+//     }
+// }

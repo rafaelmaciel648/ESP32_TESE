@@ -5,6 +5,8 @@
 
 #include <Arduino.h>
 
+#define SIGFOX_DEBUG
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -117,4 +119,5 @@ TODO:
     sigfox__get_tx_freq();
     sigfox__get_rx_freq();
     reset
+    buildMessages()
 */

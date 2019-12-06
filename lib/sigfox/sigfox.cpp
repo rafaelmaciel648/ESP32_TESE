@@ -1,4 +1,5 @@
 #include "sigfox.h"
+#include "myutils.h"
 
 #ifndef LED_TEST
     #define LED_TEST 13
@@ -8,7 +9,6 @@
 	#define WAKEUP_PIN 12
 #endif
 
-#define SIGFOX_DEBUG
 
 #define SIGFOX_FRAME_LENGTH 12
 
@@ -93,7 +93,7 @@ String NetworkDevice::getData(void){
 		delay(10);
 	}	
 
-	#ifdef SIGFOX_DEBUG
+	#ifdef DEBUG
 		Serial.print("Data: ");
 		Serial.println(data);
 	#endif
@@ -106,7 +106,7 @@ bool NetworkDevice::ready(void){
 	sigfox.print(cmd + "\r\n");
 	String status = getData();
 
-	#ifdef SIGFOX_DEBUG
+	#ifdef DEBUG
 		Serial.print("Status: ");
 		Serial.println(status);
 	#endif
@@ -119,7 +119,7 @@ String NetworkDevice::getID(void){
 	sigfox.print(cmd + "10\r\n");
 	String id = getData();
 
-	#ifdef SIGFOX_DEBUG
+	#ifdef DEBUG
 		Serial.print("ID: ");
 		Serial.println(id);
 	#endif
@@ -132,7 +132,7 @@ String NetworkDevice::getPAC(void){
 	sigfox.print(cmd + "11\r\n");
 	String pac = getData();
 
-	#ifdef SIGFOX_DEBUG
+	#ifdef DEBUG
 		Serial.print("PAC: ");
 		Serial.println(pac);
 	#endif
@@ -142,7 +142,7 @@ String NetworkDevice::getPAC(void){
 
 bool NetworkDevice::send(const void* payload, uint8_t size){
 	if( size > SIGFOX_FRAME_LENGTH ){
-		#ifdef SIGFOX_DEBUG
+		#ifdef DEBUG
 			Serial.println("BUFFER TO SEND IS OVERSIZE");
 		#endif
 		return false;
@@ -167,7 +167,7 @@ bool NetworkDevice::send(const void* payload, uint8_t size){
 		frame += String(bytes[i], HEX);
 	}
 
-	#ifdef SIGFOX_DEBUG
+	#ifdef DEBUG
 		Serial.print("FRAME: ");
 		Serial.println(frame);
 	#endif
@@ -183,7 +183,7 @@ bool NetworkDevice::send(const void* payload, uint8_t size){
 	String res = getData();
 
 	if(res.indexOf("OK") >= 0) {
-		#ifdef SIGFOX_DEBUG
+		#ifdef DEBUG
 			Serial.println("MESSAGE SENT");
 		#endif
 		return true;
@@ -194,7 +194,7 @@ bool NetworkDevice::send(const void* payload, uint8_t size){
 
 bool NetworkDevice::sendString(String str, uint8_t size){
 	if( size > 24 ){
-		#ifdef SIGFOX_DEBUG
+		#ifdef DEBUG
 			Serial.println("STRING TO SEND IS OVERSIZE");
 		#endif
 		return false;
@@ -211,7 +211,7 @@ bool NetworkDevice::sendString(String str, uint8_t size){
 	String res = getData();
 
 	if(res.indexOf("OK") >= 0) {
-		#ifdef SIGFOX_DEBUG
+		#ifdef DEBUG
 			Serial.println("STRING SENT");
 		#endif
 		return true;
@@ -229,7 +229,7 @@ bool NetworkDevice::setPower(uint8_t mode){
 	sigfox.print(cmd + mode + "\r\n");
 	String status = getData();
 
-	#ifdef SIGFOX_DEBUG
+	#ifdef DEBUG
 		Serial.print("POWER MODE: ");
 		Serial.println(status);
 	#endif
@@ -240,7 +240,7 @@ bool NetworkDevice::setPower(uint8_t mode){
 void NetworkDevice::lightSleep(void){
 	setPower(SIGFOX_POWER_SLEEP);
 
-	#ifdef SIGFOX_DEBUG
+	#ifdef DEBUG
 		Serial.println("SIGFOX SLEEP");
 	#endif
 
@@ -250,7 +250,7 @@ void NetworkDevice::lightSleep(void){
 void NetworkDevice::deepSleep(void){
 	setPower(SIGFOX_POWER_DEEPSLEEP);
 
-	#ifdef SIGFOX_DEBUG
+	#ifdef DEBUG
 		Serial.print("SIGFOX DEEP SLEEP");
 	#endif
 
@@ -262,7 +262,7 @@ void NetworkDevice::wakeUpDeepSleep(void){
 	delay(50);
 	setPower(SIGFOX_POWER_RESET);
 
-	#ifdef SIGFOX_DEBUG
+	#ifdef DEBUG
 		Serial.println("WAKE SIGFOX");
 	#endif
 
@@ -279,7 +279,7 @@ uint8_t NetworkDevice::setRadioOutPower(uint8_t power){
 }
 
 void NetworkDevice::resetDevice(void){
-	#ifdef SIGFOX_DEBUG
+	#ifdef DEBUG
 		Serial.println("RESET SIGFOX");
 	#endif
 	setPower(SIGFOX_POWER_RESET);

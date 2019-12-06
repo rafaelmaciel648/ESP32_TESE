@@ -1,11 +1,10 @@
 #include "sensors.h"
-#include "utils.h"
+#include "myutils.h"
 #include "device.h"
 #include "LinkedList.h"
+#include "rtcmodule.h"
 #include <Adafruit_ADS1015.h>
 #include <math.h>
-
-#define DEBUG_SENSORS
 
 extern Device module;
 extern LinkedList<DataItemList*> dataValues;
@@ -106,7 +105,7 @@ double TempSensor::readTemperature(){
 
 /* Temperature Print Function */
 void TempSensor::printInfo(){
-    #ifdef DEBUG_SENSORS
+    #ifdef DEBUG
     Serial.print(   "\n\tID: " + this->id +
                     "\n\tType: " + this->type +
                     "\n\tPeriod: " + this->readPeriod + " second" +
@@ -210,7 +209,7 @@ void PhSensor::readSensor(){
 }
 
 void PhSensor::printInfo(){
-    #ifdef DEBUG_SENSORS
+    #ifdef DEBUG
     Serial.print(   "\n\tID: " + this->id +
                     "\n\tType: " + this->type +
                     "\n\tPeriod: " + this->readPeriod + " second" +
@@ -246,7 +245,7 @@ uint8_t Sensor::get_state(){
 
 
 void readTemp(){
-    Serial.print("Temperature: ");
+    // Serial.print("Temperature: ");
     double temp;
     DataItemList *data = new DataItemList();
     temp = module.temperatureSensor.readTemperature();          // Read temperature
@@ -254,16 +253,16 @@ void readTemp(){
 
     data->param = temperature;
     data->value = temp;
-    // read.date = TIME;
+    data->timestamp = getDate();
     dataValues.add(data);
 
-    Serial.print(temp); Serial.println(" C");
+    // Serial.print(temp); Serial.println(" C");
 
     return;
 }
 
 void readPh(){
-    Serial.print("PH: ");
+    // Serial.print("PH: ");
     double ph_read;
     DataItemList *data = new DataItemList();
     ph_read = random(1,14);         // Read PH
@@ -271,10 +270,10 @@ void readPh(){
 
     data->param = ph;
     data->value = ph_read;
-    // read.date = TIME;
+    data->timestamp = getDate();
     dataValues.add(data);
 
-    Serial.println(ph_read);
+    // Serial.println(ph_read);
 
     return;
 }

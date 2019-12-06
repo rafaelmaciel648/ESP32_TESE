@@ -1,10 +1,13 @@
-/* UTILS_H */
+/* MYUTILS_H */
 
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef MYUTILS_H
+#define MYUTILS_H
 
 #include <Arduino.h>
-#include "sensors.h"
+#include <sensors.h>
+
+#define DEBUG
+#define UPDATE_RTC
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,7 +38,7 @@ class DataItemList{
     public:
         parameter param;
         double value;
-        //DATE_TIME
+        String timestamp;
 };
 
 
