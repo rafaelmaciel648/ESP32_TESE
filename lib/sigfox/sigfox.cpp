@@ -5,8 +5,12 @@
     #define LED_TEST 13
 #endif
 
-#ifndef WAKEUP_PIN
-	#define WAKEUP_PIN 12
+#ifndef SIGFOX_WAKEUP_PIN
+	#define SIGFOX_WAKEUP_PIN 12
+#endif
+
+#ifndef SIGFOX_RESET_PIN
+	#define SIGFOX_RESET_PIN 14
 #endif
 
 
@@ -63,7 +67,8 @@ typedef enum {
 
 void NetworkDevice::begin(void){
     sigfox.begin(9600);
-	sigfox.setTimeout(100);
+	while(!sigfox);
+	sigfox.setTimeout(20000);
 };
 
 uint32_t NetworkDevice::getbaud(void){
@@ -91,6 +96,7 @@ String NetworkDevice::getData(void){
 			data += output;
     	}
 		delay(10);
+		Serial.print(".");
 	}	
 
 	#ifdef DEBUG
@@ -167,6 +173,8 @@ bool NetworkDevice::send(const void* payload, uint8_t size){
 		frame += String(bytes[i], HEX);
 	}
 
+	frame.toUpperCase();
+
 	#ifdef DEBUG
 		Serial.print("FRAME: ");
 		Serial.println(frame);
@@ -174,11 +182,15 @@ bool NetworkDevice::send(const void* payload, uint8_t size){
 
 	String cmd = String(sigfox_AT_cmd[CMD_SEND_FRAME]);
 
+	cmd = cmd + frame + "\r\n";
+
+	Serial.print("CMD to send: "); Serial.println(cmd);
+
 	sigfox.print(cmd + frame + "\r\n");
 
-	while (!sigfox.available()){
-		blink();
-	}
+	// while (!sigfox.available()){
+	// 	blink();
+	// }
 
 	String res = getData();
 
@@ -187,9 +199,12 @@ bool NetworkDevice::send(const void* payload, uint8_t size){
 			Serial.println("MESSAGE SENT");
 		#endif
 		return true;
+	}else{
+		#ifdef DEBUG
+			Serial.println("MESSAGE NOT SENT");
+		#endif
+		return false;
 	}
-
-	return false;
 }
 
 bool NetworkDevice::sendString(String str, uint8_t size){
@@ -258,7 +273,7 @@ void NetworkDevice::deepSleep(void){
 }
 
 void NetworkDevice::wakeUpDeepSleep(void){
-	pinMode(WAKEUP_PIN, INPUT_PULLDOWN);
+	pinMode(SIGFOX_WAKEUP_PIN, INPUT_PULLDOWN);
 	delay(50);
 	setPower(SIGFOX_POWER_RESET);
 
@@ -266,7 +281,7 @@ void NetworkDevice::wakeUpDeepSleep(void){
 		Serial.println("WAKE SIGFOX");
 	#endif
 
-	pinMode(WAKEUP_PIN, INPUT_PULLUP);
+	pinMode(SIGFOX_WAKEUP_PIN, INPUT_PULLUP);
 	return;
 }
 
@@ -283,5 +298,18 @@ void NetworkDevice::resetDevice(void){
 		Serial.println("RESET SIGFOX");
 	#endif
 	setPower(SIGFOX_POWER_RESET);
+	return;
+}
+
+void NetworkDevice::hardwareResetDevice(void){
+	#ifdef DEBUG
+		Serial.println("HARDWARE RESET SIGFOX");
+	#endif
+
+	pinMode(SIGFOX_RESET_PIN, INPUT_PULLDOWN);
+	delay(50);
+	setPower(SIGFOX_POWER_RESET);
+
+	pinMode(SIGFOX_RESET_PIN, INPUT_PULLUP);
 	return;
 }

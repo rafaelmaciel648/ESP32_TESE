@@ -7,19 +7,16 @@
 // #include <SPI.h>
 // #include <SD.h>
 #include <Wire.h>
-// #include <Adafruit_ADS1015.h>
 
 #include "device.h"
 #include "scheduler.h"
 #include "sensors.h"
-// #include "filemanager.h"
 #include "myutils.h"
 #include "sigfox.h"
 #include "LinkedList.h"
 #include "datalogger.h"
 #include "rtcmodule.h"
 
-// #define UPDATE_RTC
 
 #ifdef UPDATE_RTC
 #include "unixtime.h"
@@ -27,30 +24,31 @@
 
 #define LED_TEST 13
 #define START_BUTTON 34
-#define WAKEUP_PIN 12
+#define SIGFOX_WAKEUP_PIN 12
+#define SIGFOX_RESET_PIN 14
 
 RTC_DATA_ATTR int boot_count = 0;
 RTC_DATA_ATTR SchedTask tasks[10];
 RTC_DATA_ATTR Device module;
-// RTC_DATA_ATTR sensorValues lastReads;
 RTC_DATA_ATTR NetworkDevice mySigfox;
 RTC_DATA_ATTR LinkedList<DataItemList*> dataValues = LinkedList<DataItemList*>();
 RTC_DATA_ATTR payload payload_data;
 
 #define MAX_SENSORS 5
+#define MAX_PERIOD 86400        // period 24h in seconds
 
 
 // #define SLEEPMODE
 #define uS_TO_S_FACTOR 1000000      /* Conversion factor for micro seconds to seconds */
 #define TIME_TO_SLEEP  10           /* Time ESP32 will go to sleep (in seconds) */
 
-struct tm data;
 
 void setup(){
     pinMode(LED_TEST,OUTPUT);                       // Test led. Waiting message sigfox
     digitalWrite(LED_TEST, LOW);
     
-    pinMode(WAKEUP_PIN, INPUT_PULLUP);              // Pin wake up Sigfox
+    pinMode(SIGFOX_WAKEUP_PIN, INPUT_PULLUP);              // Pin wake up Sigfox
+    // pinMode(SIGFOX_RESET_PIN, INPUT_PULLUP);              // Pin wake up Sigfox
 
     // START BUTTON *************************
     pinMode(START_BUTTON, INPUT);
@@ -66,12 +64,14 @@ void setup(){
     #endif
     Wire.begin();
     mySigfox.begin();
+    
+    mySigfox.resetDevice();
 
     #ifdef UPDATE_RTC
         updateRTC();
     #endif
 
-    Serial.print("PAYLOAD SIZE: "); Serial.println(sizeof(payload));
+    // Serial.print("PAYLOAD SIZE: "); Serial.println(sizeof(payload));
 
     
 
@@ -83,20 +83,6 @@ void setup(){
     // esp_bt_mem_release(ESP_BT_MODE_BTDM);
     // esp_wifi_stop();
     // esp_wifi_deinit();
-    
-    // timeval tv;//Cria a estrutura temporaria para funcao abaixo.
-	// tv.tv_sec = 1551362400;//Atribui minha data atual. Voce pode usar o NTP para isso ou o site citado no artigo!
-	// settimeofday(&tv, NULL);//Configura o RTC para manter a data atribuida atualizada.
-
-    // time_t tt = time(NULL);//Obtem o tempo atual em segundos. Utilize isso sempre que precisar obter o tempo atual
-	// data = *gmtime(&tt);//Converte o tempo atual e atribui na estrutura
-
-	// char data_formatada[64];
-	// strftime(data_formatada, 64, "%d/%m/%Y %H:%M:%S", &data);//Cria uma String formatada da estrutura "data"
- 
-	// Serial.printf("\nUnix Time: %d\n", int32_t(tt));//Mostra na Serial o Unix time
-	// Serial.printf("Data formatada: %s\n", data_formatada);//Mostra na Serial a data formatada
-
     
 
     // ************************ROUTINE TO RUN ONLY ON SYSTEM BOOT *************************
@@ -168,6 +154,18 @@ void loop(){
     // 6- SIGFOX COMMUNICATION
 
     // 7- DEEPSLEEP
+
+    unsigned long time_next_read = MAX_PERIOD;
+    for(uint8_t i=0; i<10; i++){
+        if(!tasks[i].func){
+            if(tasks[i].nextExec < time_next_read){
+                time_next_read = tasks[i].nextExec;
+            }
+        }
+    }
+
+    Serial.print("Next execution: "); Serial.println(time_next_read);
+
     #ifdef SLEEPMODE
         // BEFORE GO SLEEP, CALCULATE TIME_TO_SLEEP!!!!!!!!!!!!!!!
         esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);

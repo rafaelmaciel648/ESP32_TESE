@@ -98,6 +98,8 @@ class NetworkDevice{
          */
         void resetDevice(void);
 
+        void hardwareResetDevice(void);
+
     private:
         HardwareSerial sigfox = HardwareSerial(2);
 };

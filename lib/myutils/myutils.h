@@ -4,10 +4,10 @@
 #define MYUTILS_H
 
 #include <Arduino.h>
-#include <sensors.h>
+#include "sensors.h"
 
 #define DEBUG
-#define UPDATE_RTC
+// #define UPDATE_RTC
 
 #ifdef __cplusplus
 extern "C" {

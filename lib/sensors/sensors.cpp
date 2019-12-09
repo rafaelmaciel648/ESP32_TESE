@@ -245,7 +245,6 @@ uint8_t Sensor::get_state(){
 
 
 void readTemp(){
-    // Serial.print("Temperature: ");
     double temp;
     DataItemList *data = new DataItemList();
     temp = module.temperatureSensor.readTemperature();          // Read temperature
@@ -256,13 +255,10 @@ void readTemp(){
     data->timestamp = getCurrentTime();
     dataValues.add(data);
 
-    // Serial.print(temp); Serial.println(" C");
-
     return;
 }
 
 void readPh(){
-    // Serial.print("PH: ");
     double ph_read;
     DataItemList *data = new DataItemList();
     ph_read = random(1,14);         // Read PH
@@ -272,8 +268,6 @@ void readPh(){
     data->value = ph_read;
     data->timestamp = getCurrentTime();
     dataValues.add(data);
-
-    // Serial.println(ph_read);
 
     return;
 }
